@@ -213,41 +213,33 @@ function promptAddress() {
 }
 
 function connectWallet() {
-  // Gather EVM providers (skip Kaspa)
   var ps = [];
   if (window.ethereum) {
     var all = window.ethereum.providers && window.ethereum.providers.length ? window.ethereum.providers : [window.ethereum];
     ps = all.filter(function(p) { return !p.isKaspa; });
   }
-  if (ps.length === 0) {
-    addBot('No EVM wallet found. Use the [+] Address button to enter a Mantle address manually.');
-    return;
-  }
-  // Auto-pick MetaMask if available, else first
+  if (ps.length === 0) { addBot("No EVM wallet. Use [+] Address."); return; }
   var mm = ps.find(function(p) { return p.isMetaMask; });
   var provider = mm || ps[0];
   (async function() {
     try {
-      addBot('Connecting to ' + (mm ? 'MetaMask' : 'wallet') + '...');
-      var accs = await provider.request({method: 'eth_requestAccounts'});
-      if (!accs || !accs.length) { addBot('No accounts returned.'); return; }
+      var accs = await provider.request({method: "eth_requestAccounts"});
+      if (!accs || !accs.length) { addBot("No accounts."); return; }
       try {
-        await provider.request({method: 'wallet_switchEthereumChain', params: [{chainId: MANTLE.hexChainId}]});
+        await provider.request({method: "wallet_switchEthereumChain", params: [{chainId: MANTLE.hexChainId}]});
       } catch(e) {
         if (e.code === 4902) {
-          await provider.request({method: 'wallet_addEthereumChain', params: [{
+          await provider.request({method: "wallet_addEthereumChain", params: [{
             chainId: MANTLE.hexChainId,
-            chainName: 'Mantle Sepolia Testnet',
+            chainName: "Mantle Sepolia Testnet",
             rpcUrls: [MANTLE.rpc],
-            nativeCurrency: {name: 'MNT', symbol: 'MNT', decimals: 18},
+            nativeCurrency: {name: "MNT", symbol: "MNT", decimals: 18},
             blockExplorerUrls: [MANTLE.explorer]
           }]});
-        } else { addBot('Chain switch failed: ' + e.message); return; }
+        }
       }
       setWallet(accs[0]);
-    } catch(e) {
-      addBot('Connection cancelled: ' + e.message);
-    }
+    } catch(e) { addBot("Failed: " + e.message); }
   })();
 }
 
