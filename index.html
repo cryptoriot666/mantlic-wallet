@@ -227,24 +227,54 @@ function promptAddress() {
 }
 
 async function connectWallet() {
-  // Try to find MetaMask among providers
-  let p = window.ethereum;
-  if (window.ethereum && window.ethereum.providers && window.ethereum.providers.length > 0) {
-    const mm = window.ethereum.providers.find(x => x.isMetaMask);
-    if (mm) p = mm;
+  // Collect all EVM providers
+  let providers = [];
+  if (window.ethereum) {
+    if (window.ethereum.providers && window.ethereum.providers.length) {
+      providers = window.ethereum.providers;
+    } else {
+      providers = [window.ethereum];
+    }
   }
-  if (!p) {
+  // Also check for specific wallets (e.g. trust, coinbase, etc)
+  if (window.trustWallet) providers.push(window.trustWallet);
+  if (window.coinbaseWalletExtension) providers.push(window.coinbaseWalletExtension);
+
+  if (providers.length === 0) {
     addBotMsg('No EVM wallet detected. Use the Address button to enter a Mantle address manually.');
     return;
   }
+
+  // Show wallet chooser
+  let chosen = null;
+  if (providers.length === 1) {
+    chosen = providers[0];
+  } else {
+    // Multiple wallets - let user pick
+    const names = providers.map((p, i) => {
+      if (p.isMetaMask) return i + ': MetaMask';
+      if (p.isTrust) return i + ': Trust Wallet';
+      if (p.isCoinbaseWallet) return i + ': Coinbase Wallet';
+      if (p.isOKXWallet) return i + ': OKX Wallet';
+      return i + ': Wallet #' + (i+1);
+    });
+    const choice = prompt('Multiple wallets detected. Pick one:\n' + names.join('\n') + '\n\nEnter number (0-' + (providers.length-1) + '):');
+    const idx = parseInt(choice);
+    if (isNaN(idx) || idx < 0 || idx >= providers.length) {
+      addBotMsg('Invalid choice. Try again or use Address button.');
+      return;
+    }
+    chosen = providers[idx];
+  }
+
   try {
-    const accs = await p.request({ method: 'eth_requestAccounts' });
+    const accs = await chosen.request({ method: 'eth_requestAccounts' });
     if (!accs || accs.length === 0) throw new Error('No accounts');
     try {
-      await p.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MANTLE.hexChainId }] });
+      await chosen.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MANTLE.hexChainId }] });
     } catch(e) {
       if (e.code === 4902) {
-        await p.request({
+        await chosen.request({
           method: 'wallet_addEthereumChain',
           params: [{
             chainId: MANTLE.hexChainId,
@@ -329,6 +359,63 @@ async function processCmd(cmd) {
   }
 
   // Unknown — try Qwen
+  
+  if (c.startsWith('send ') || c.startsWith('transfer ')) {
+    if (!address) { addBotMsg('Set an address first.'); return; }
+    // Parse: "send 1.5 to 0x..." or "transfer 0.5 0x..."
+    const parts = c.replace(/^(send|transfer)\s+/i, '').split(/\s+(?:to|->)\s+/i);
+    let amount, to;
+    if (parts.length >= 2) {
+      amount = parseFloat(parts[0]);
+      to = parts[1].trim();
+    } else {
+      // "send 0x... 1.5" format
+      const sp = c.replace(/^(send|transfer)\s+/i, '').split(/\s+/);
+      if (sp.length === 2) {
+        to = sp[0]; amount = parseFloat(sp[1]);
+      }
+    }
+    // Also handle "send 1.5 to 0x..."
+    const match = cmd.match(/^(send|transfer)\s+([\d.]+)\s+(?:to|->)?\s*(0x[a-fA-F0-9]{40})/);
+    if (match) { amount = parseFloat(match[2]); to = match[3]; }
+
+    if (!to || !to.startsWith('0x') || to.length !== 42) { addBotMsg('Invalid address: must be 0x... (42 chars).'); return; }
+    if (isNaN(amount) || amount <= 0) { addBotMsg('Invalid amount.'); return; }
+
+    // Show confirmation
+    addBotMsg('Proposing: Send **' + amount + ' MNT** to ' + to.slice(0,6) + '...' + to.slice(-4) + '\n\n<small style="color:var(--dim)">Use MetaMask to sign. Make sure you're on Mantle Sepolia.</small>');
+
+    // Try to execute via MetaMask
+    let p = window.ethereum;
+    if (window.ethereum && window.ethereum.providers) {
+      const mm = window.ethereum.providers.find(x => x.isMetaMask);
+      if (mm) p = mm;
+    }
+    if (p && p.request) {
+      try {
+        const wei = '0x' + BigInt(Math.floor(amount * 1e18)).toString(16);
+        const nonce = await rpc('eth_getTransactionCount', [address, 'pending']);
+        const gasPrice = await rpc('eth_gasPrice', []);
+        const tx = {
+          from: address,
+          to: to,
+          value: wei,
+          gasPrice: gasPrice,
+          gas: '0x5208', // 21000
+          nonce: nonce
+        };
+        const txHash = await p.request({ method: 'eth_sendTransaction', params: [tx] });
+        addBotMsg('Transaction sent!\n\n**Hash:** ' + txHash.slice(0,10) + '...' + txHash.slice(-8) + '\n<small style="color:var(--dim)">View on <a href="' + MANTLE.explorer + '/tx/' + txHash + '" target="_blank" style="color:var(--accent)">explorer</a></small>');
+      } catch(e) {
+        addBotMsg('Transaction failed: ' + e.message);
+      }
+    } else {
+      addBotMsg('Cannot execute: no wallet connected. Use Connect Wallet first.');
+    }
+    return;
+  }
+
+
   if (window.QWEN) {
     try {
       const [bal, gas, block] = await Promise.all([
