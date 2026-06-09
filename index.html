@@ -225,7 +225,6 @@ function connectWallet() {
     try {
       var accs = await provider.request({method: "eth_requestAccounts"});
       if (!accs || !accs.length) { addBot("No accounts."); return; }
-      // Try switch chain - if RPC conflict, skip and just use address
       try {
         await provider.request({method: "wallet_switchEthereumChain", params: [{chainId: MANTLE.hexChainId}]});
       } catch(e) {
@@ -234,13 +233,14 @@ function connectWallet() {
             await provider.request({method: "wallet_addEthereumChain", params: [{
               chainId: MANTLE.hexChainId,
               chainName: "Mantle Sepolia Testnet",
-              rpcUrls: [MANTLE.altRpc],
+              rpcUrls: ["https://0x7533.sepolia.mantle.xyz"],
               nativeCurrency: {name: "MNT", symbol: "MNT", decimals: 18},
               blockExplorerUrls: [MANTLE.explorer]
             }]});
           } catch(e2) {}
         }
       }
+      // ALWAYS set wallet after getting accounts, regardless of chain switch result
       setWallet(accs[0]);
     } catch(e) { addBot("Failed: " + e.message); }
   })();
