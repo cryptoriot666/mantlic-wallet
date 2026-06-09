@@ -145,7 +145,7 @@ a:hover{opacity:.8}
 <script>
 // === Config ===
 const MANTLE = {
-  rpc: 'https://rpc.sepolia.mantle.xyz',
+  rpc: 'https://rpc.sepolia.mantle.xyz', altRpc: 'https://0x7533.sepolia.mantle.xyz',
   chainId: 50003,
   hexChainId: '0xc353',
   explorer: 'https://explorer.sepolia.mantle.xyz'
@@ -225,6 +225,22 @@ function connectWallet() {
     try {
       var accs = await provider.request({method: "eth_requestAccounts"});
       if (!accs || !accs.length) { addBot("No accounts."); return; }
+      // Try switch chain - if RPC conflict, skip and just use address
+      try {
+        await provider.request({method: "wallet_switchEthereumChain", params: [{chainId: MANTLE.hexChainId}]});
+      } catch(e) {
+        if (e.code === 4902) {
+          try {
+            await provider.request({method: "wallet_addEthereumChain", params: [{
+              chainId: MANTLE.hexChainId,
+              chainName: "Mantle Sepolia Testnet",
+              rpcUrls: [MANTLE.altRpc],
+              nativeCurrency: {name: "MNT", symbol: "MNT", decimals: 18},
+              blockExplorerUrls: [MANTLE.explorer]
+            }]});
+          } catch(e2) {}
+        }
+      }
       setWallet(accs[0]);
     } catch(e) { addBot("Failed: " + e.message); }
   })();
