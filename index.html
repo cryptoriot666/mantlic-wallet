@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mantlic Wallet</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root { --bg:#000; --text:#fff; --dim:rgba(255,255,255,.5); --accent:#FF6B9D; --border:rgba(255,255,255,.08); }
@@ -213,14 +212,10 @@ footer .cta {
           <div class="st" id="netStatus">Mantle Sepolia - connecting...</div>
         </div>
       </div>
-      <div class="chat-msgs" id="chatMsgs">
-        <div class="msg bot">
-          <div class="b">Connecting to Mantle... <span class="typing">[wait]</span></div>
-        </div>
-      </div>
+      <div class="chat-msgs" id="chatMsgs"></div>
       <div class="chat-inp">
-        <input type="text" id="chatInp" placeholder="Type a command..." autocomplete="off" disabled>
-        <button id="sendBtn" disabled>
+        <input type="text" id="chatInp" placeholder="Type a command..." autocomplete="off">
+        <button id="sendBtn">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5">
             <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/>
           </svg>
@@ -279,17 +274,16 @@ footer .cta {
 </footer>
 
 <script>
-const { JsonRpcProvider, formatEther, formatUnits } = ethers;
-
+// ===== NO EXTERNAL DEPENDENCIES - pure fetch() for RPC =====
 const MANTLE = {
   rpc: 'https://rpc.sepolia.mantle.xyz',
   chainId: 50003,
+  hexChainId: '0xc353',
   explorer: 'https://explorer.sepolia.mantle.xyz'
 };
 
-let provider = null;
-let signer = null;
 let address = null;
+let signer = null;
 let mntPrice = 1.24;
 
 const cm = document.getElementById('chatMsgs');
@@ -298,29 +292,55 @@ const sb = document.getElementById('sendBtn');
 const cb = document.getElementById('connBtn');
 const ns = document.getElementById('netStatus');
 const cs = document.getElementById('chainStatus');
+const addrBtn = document.getElementById('addrBtn');
+
+// Native RPC fetch - no ethers.js needed
+async function rpc(method, params) {
+  const res = await fetch(MANTLE.rpc, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params })
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.result;
+}
+
+// Hex helpers
+function hexToDec(hex) { return parseInt(hex.startsWith('0x') ? hex.slice(2) : hex, 16); }
+function hexToNumber(hex) { return hexToDec(hex); }
+function weiToEth(wei) { return BigInt(wei) / 1000000000000000000n + '.' + String(BigInt(wei) % 1000000000000000000n).padStart(18,'0').slice(0,4); }
+function weiToEtherStr(weiHex) {
+  const val = BigInt(weiHex);
+  const eth = val / 1000000000000000000n;
+  const frac = val % 1000000000000000000n;
+  return Number(eth + '.' + String(frac).padStart(18,'0').slice(0,4));
+}
 
 async function initChain() {
+  addBotMsg('Connecting to Mantle Sepolia...');
   try {
-    provider = new JsonRpcProvider(MANTLE.rpc, { chainId: MANTLE.chainId, name: 'Mantle Sepolia' });
-    const net = await provider.getNetwork();
-    const block = await provider.getBlock('latest');
-    const gas = await provider.getFeeData();
+    const [netId, blockHex, gasHex, blockData] = await Promise.all([
+      rpc('net_version', []),
+      rpc('eth_blockNumber', []),
+      rpc('eth_gasPrice', []),
+      rpc('eth_getBlockByNumber', ['latest', false])
+    ]);
 
-    ns.textContent = 'Mantle Sepolia - #' + block.number.toLocaleString();
-    cs.innerHTML = '<span class="d"></span> Mantle Sepolia - Block ' + block.number.toLocaleString() + ' - ' + parseFloat(formatUnits(gas.gasPrice, 'gwei')).toFixed(0) + ' Gwei';
+    const blockNum = hexToNumber(blockHex);
+    const gasPrice = (BigInt(gasHex) * 100n / 1000000000n) / 100n; // round to 2 decimals
+
+    ns.textContent = 'Mantle Sepolia - #' + blockNum.toLocaleString();
+    cs.innerHTML = '<span class="d"></span> Mantle Sepolia - Block ' + blockNum.toLocaleString() + ' - ' + gasPrice + ' Gwei';
     cs.className = 'stack-line';
-
-    ci.disabled = false;
-    sb.disabled = false;
-    ci.focus();
 
     clearChat();
-    addBotMsg('Connected to Mantle Sepolia Testnet. Type help to see commands.');
+    addBotMsg('Connected to Mantle Sepolia Testnet.\nBlock #' + blockNum.toLocaleString() + ' - ' + gasPrice + ' Gwei\n\nType help to see commands.');
   } catch(e) {
     ns.textContent = 'Mantle - connection failed';
-    cs.innerHTML = '<span class="err">[!]</span> RPC connection failed: ' + e.message;
+    cs.innerHTML = '<span class="err">[!]</span> RPC error: ' + e.message;
     cs.className = 'stack-line';
-    addBotMsg('[!] Failed to connect to Mantle. RPC may be down.');
+    addBotMsg('[!] RPC connection failed: ' + e.message + '\n\nBut you can still chat. Commands work offline too. Try help.');
   }
 }
 
@@ -361,13 +381,19 @@ function promptAddress() {
 }
 
 async function getBalance(addr) {
-  const bal = await provider.getBalance(addr);
-  return formatEther(bal);
+  const bal = await rpc('eth_getBalance', [addr, 'latest']);
+  return weiToEtherStr(bal);
 }
 
 async function getGasPrice() {
-  const gas = await provider.getFeeData();
-  return formatUnits(gas.gasPrice, 'gwei');
+  const gas = await rpc('eth_gasPrice', []);
+  const gwei = BigInt(gas) * 100n / 1000000000n;
+  return Number(gwei) / 100;
+}
+
+async function getBlockNumber() {
+  const b = await rpc('eth_blockNumber', []);
+  return hexToNumber(b);
 }
 
 async function processCmd(input) {
@@ -377,32 +403,40 @@ async function processCmd(input) {
 
   if (cmd === 'balance' || cmd === 'bal') {
     if (!address) { addBotMsg('No wallet/address set. Click "[+] Address" or "Connect Wallet".'); return; }
-    const bal = await getBalance(address);
-    const n = parseFloat(bal);
-    addBotMsg('Your Mantle balance:\n\n<div style="font-size:1.2rem;margin:.5rem 0">' + n.toLocaleString(undefined,{minimumFractionDigits:4}) + ' <span style="color:var(--accent)">MNT</span></div>\n<small style="color:var(--dim)">~ $' + (n*mntPrice).toLocaleString(undefined,{minimumFractionDigits:2}) + ' USD</small>');
+    try {
+      const bal = await getBalance(address);
+      addBotMsg('Your Mantle balance:\n\n<div style="font-size:1.2rem;margin:.5rem 0">' + bal.toLocaleString(undefined,{minimumFractionDigits:4}) + ' <span style="color:var(--accent)">MNT</span></div>\n<small style="color:var(--dim)">~ $' + (bal*mntPrice).toLocaleString(undefined,{minimumFractionDigits:2}) + ' USD</small>');
+    } catch(e) { addBotMsg('[!] RPC error: ' + e.message); }
     return;
   }
 
   if (cmd === 'tokens' || cmd === 'portfolio') {
     if (!address) { addBotMsg('No address set.'); return; }
-    const bal = await getBalance(address);
-    addBotMsg('Portfolio:\n\n<div class="resp"><div class="rw"><span class="k">MNT</span><span class="v">' + parseFloat(bal).toLocaleString(undefined,{minimumFractionDigits:4}) + ' (100%)</span></div><div class="rw"><span class="k">Status</span><span class="v ok">[ok] Live</span></div></div>');
+    try {
+      const bal = await getBalance(address);
+      addBotMsg('Portfolio:\n\n<div class="resp"><div class="rw"><span class="k">MNT</span><span class="v">' + bal.toLocaleString(undefined,{minimumFractionDigits:4}) + ' (100%)</span></div><div class="rw"><span class="k">Status</span><span class="v ok">[ok] Live</span></div></div>');
+    } catch(e) { addBotMsg('[!] RPC error: ' + e.message); }
     return;
   }
 
   if (cmd === 'analyze' || cmd === 'analysis') {
     if (!address) { addBotMsg('No address set.'); return; }
-    const bal = await getBalance(address);
-    const gas = await getGasPrice();
-    addBotMsg('Analysis:\n\n<div class="resp"><div class="rw"><span class="k">Balance</span><span class="v">' + parseFloat(bal).toFixed(4) + ' MNT</span></div><div class="rw"><span class="k">Gas</span><span class="v">' + parseFloat(gas).toFixed(0) + ' Gwei</span></div><div class="rw"><span class="k">Diversity</span><span class="v">100% MNT</span></div><div class="rw"><span class="k">Risk</span><span class="v">Low</span></div><div class="rw"><span class="k">Status</span><span class="v ok">[ok] Connected</span></div></div>');
+    try {
+      const [bal, gas] = await Promise.all([getBalance(address), getGasPrice()]);
+      addBotMsg('Analysis:\n\n<div class="resp"><div class="rw"><span class="k">Balance</span><span class="v">' + bal.toFixed(4) + ' MNT</span></div><div class="rw"><span class="k">Gas</span><span class="v">' + gas.toFixed(0) + ' Gwei</span></div><div class="rw"><span class="k">Diversity</span><span class="v">100% MNT</span></div><div class="rw"><span class="k">Risk</span><span class="v">Low</span></div><div class="rw"><span class="k">Status</span><span class="v ok">[ok] Connected</span></div></div>');
+    } catch(e) { addBotMsg('[!] RPC error: ' + e.message); }
     return;
   }
 
   if (cmd === 'status' || cmd === 'net') {
-    const block = await provider.getBlock('latest');
-    const gas = await getGasPrice();
-    const bal = address ? await getBalance(address) : '--';
-    addBotMsg('Network:\n\n<div class="resp"><div class="rw"><span class="k">Network</span><span class="v">Mantle Sepolia</span></div><div class="rw"><span class="k">Block</span><span class="v">#' + block.number.toLocaleString() + '</span></div><div class="rw"><span class="k">Gas</span><span class="v">' + parseFloat(gas).toFixed(0) + ' Gwei</span></div><div class="rw"><span class="k">Wallet</span><span class="v">' + (address ? address.slice(0,6)+'...'+address.slice(-4) : 'Not set') + '</span></div><div class="rw"><span class="k">MNT</span><span class="v">' + (bal !== '--' ? parseFloat(bal).toFixed(4)+' MNT' : '--') + '</span></div><div class="rw"><span class="k">RPC</span><span class="v ok">[ok] Connected</span></div></div>');
+    try {
+      const [blockNum, gas, bal] = await Promise.all([
+        getBlockNumber(),
+        getGasPrice(),
+        address ? getBalance(address) : Promise.resolve(null)
+      ]);
+      addBotMsg('Network:\n\n<div class="resp"><div class="rw"><span class="k">Network</span><span class="v">Mantle Sepolia</span></div><div class="rw"><span class="k">Block</span><span class="v">#' + blockNum.toLocaleString() + '</span></div><div class="rw"><span class="k">Gas</span><span class="v">' + gas.toFixed(0) + ' Gwei</span></div><div class="rw"><span class="k">Wallet</span><span class="v">' + (address ? address.slice(0,6)+'...'+address.slice(-4) : 'Not set') + '</span></div><div class="rw"><span class="k">MNT</span><span class="v">' + (bal !== null ? bal.toFixed(4)+' MNT' : '--') + '</span></div><div class="rw"><span class="k">RPC</span><span class="v ok">[ok] Connected</span></div></div>');
+    } catch(e) { addBotMsg('[!] RPC error: ' + e.message); }
     return;
   }
 
@@ -413,17 +447,14 @@ async function processCmd(input) {
 
   // Unknown command - try Qwen AI
   if (address && window.QWEN) {
-    const bal = await getBalance(address);
-    const gas = await getGasPrice();
-    const block = await provider.getBlock('latest');
-    const ai = await window.QWEN.ask([
-      { role: 'system', content: 'You are Mantlic Wallet, an AI finance agent on Mantle blockchain. You have access to live on-chain data. Answer concisely (max 100 words). Be helpful and direct. Current context: MNT balance ' + bal + ', gas ' + gas + ' Gwei, block #' + block.number + '. Wallet: ' + address.slice(0,6) + '...' + address.slice(-4) },
-      { role: 'user', content: input }
-    ]);
-    if (ai) {
-      addBotMsg(ai);
-      return;
-    }
+    try {
+      const [bal, gas, blockNum] = await Promise.all([getBalance(address), getGasPrice(), getBlockNumber()]);
+      const ai = await window.QWEN.ask([
+        { role: 'system', content: 'You are Mantlic Wallet, an AI finance agent on Mantle blockchain. You have access to live on-chain data. Answer concisely (max 100 words). Be helpful and direct. Current context: MNT balance ' + bal + ', gas ' + gas + ' Gwei, block #' + blockNum + '. Wallet: ' + address.slice(0,6) + '...' + address.slice(-4) },
+        { role: 'user', content: input }
+      ]);
+      if (ai) { addBotMsg(ai); return; }
+    } catch(e) {}
   }
   addBotMsg('Unknown: ' + input.replace(/</g,'&lt;') + '\nType help.');
 }
@@ -434,20 +465,20 @@ async function connectWallet() {
     return;
   }
   if (!window.ethereum) {
-    addBotMsg('[!] No browser wallet. Use "[+] Address" button to enter a Mantle address manually.');
+    addBotMsg('[!] No browser wallet (MetaMask/OKX). Use "[+] Address" button to enter a Mantle address manually.');
     return;
   }
   try {
     addBotMsg('Requesting wallet...');
     await window.ethereum.request({ method: 'eth_requestAccounts' });
     try {
-      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xc353' }] });
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MANTLE.hexChainId }] });
     } catch(e) {
       if (e.code === 4902) {
         await window.ethereum.request({
           method: 'wallet_addEthereumChain',
           params: [{
-            chainId: '0xc353',
+            chainId: MANTLE.hexChainId,
             chainName: 'Mantle Sepolia Testnet',
             rpcUrls: [MANTLE.rpc],
             nativeCurrency: { name: 'MNT', symbol: 'MNT', decimals: 18 },
@@ -456,10 +487,8 @@ async function connectWallet() {
         });
       }
     }
-    const { BrowserProvider } = ethers;
-    provider = new BrowserProvider(window.ethereum);
-    signer = await provider.getSigner();
-    address = await signer.getAddress();
+    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    address = accounts[0];
     cb.textContent = '[ok] Connected';
     cb.className = 'conn-btn connected';
     ns.textContent = 'Wallet: ' + address.slice(0,6) + '...' + address.slice(-4);
@@ -488,6 +517,8 @@ async function sendMsg() {
 
 ci.addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
 sb.addEventListener('click', sendMsg);
+
+// Start chain connection - chat already enabled
 initChain();
 
 // Qwen AI with CORS proxy fallback
@@ -517,7 +548,7 @@ window.QWEN = {
     return null;
   }
 };
-console.log('[ok] Qwen AI ready');
+console.log('[ok] Mantlic Wallet ready - no CDN deps');
 </script>
 </body>
 </html>
