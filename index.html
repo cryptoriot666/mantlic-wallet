@@ -460,22 +460,28 @@ async function processCmd(input) {
 }
 
 async function connectWallet() {
-  if (address && address.startsWith('0x')) {
-    addBotMsg('Already watching: ' + address.slice(0,6) + '...' + address.slice(-4));
+  if (address && address.startsWith("0x")) {
+    addBotMsg("Already watching: " + address.slice(0,6) + "..." + address.slice(-4));
     return;
   }
-  if (!window.ethereum) {
-    addBotMsg('[!] No browser wallet (MetaMask/OKX). Use "[+] Address" button to enter a Mantle address manually.');
+  let provider = window.ethereum;
+  if (window.ethereum && window.ethereum.providers && window.ethereum.providers.length > 0) {
+    const mm = window.ethereum.providers.find(p => p.isMetaMask);
+    if (mm) provider = mm;
+  }
+  if (!provider) {
+    addBotMsg('[!] No EVM wallet found. Use "[+] Address" button to enter a Mantle address manually.');
     return;
   }
   try {
     addBotMsg('Requesting wallet...');
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const accs = await provider.request({ method: 'eth_requestAccounts' });
+    if (!accs || accs.length === 0) throw new Error('No accounts');
     try {
-      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MANTLE.hexChainId }] });
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MANTLE.hexChainId }] });
     } catch(e) {
       if (e.code === 4902) {
-        await window.ethereum.request({
+        await provider.request({
           method: 'wallet_addEthereumChain',
           params: [{
             chainId: MANTLE.hexChainId,
@@ -485,16 +491,15 @@ async function connectWallet() {
             blockExplorerUrls: [MANTLE.explorer]
           }]
         });
-      }
+      } else throw e;
     }
-    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-    address = accounts[0];
+    address = accs[0];
     cb.textContent = '[ok] Connected';
     cb.className = 'conn-btn connected';
     ns.textContent = 'Wallet: ' + address.slice(0,6) + '...' + address.slice(-4);
     addBotMsg('[ok] Connected: ' + address.slice(0,6) + '...' + address.slice(-4));
   } catch(e) {
-    addBotMsg('[!] Connection cancelled.');
+    addBotMsg('[!] Connection cancelled: ' + e.message);
   }
 }
 
