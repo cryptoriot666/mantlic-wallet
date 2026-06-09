@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mantle Mantlic Wallet</title>
+<title>Mantlic Wallet</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
 <style>
@@ -19,8 +19,6 @@ body {
   display:flex;
   flex-direction:column;
 }
-
-/* Header */
 header {
   position:fixed; top:0; left:0; right:0; z-index:100;
   padding:.8rem 1.5rem;
@@ -42,8 +40,6 @@ header {
 }
 .conn-btn:hover { opacity:.8; }
 .conn-btn.connected { background:rgba(255,255,255,.1); color:var(--text); }
-
-/* Hero + Chat */
 .hero {
   flex:1;
   display:flex;
@@ -64,8 +60,6 @@ header {
 .hero h1 .accent { color:var(--accent); }
 .hero p { font-size:.9rem; color:var(--dim); max-width:460px; }
 .hero p a { color:var(--accent); cursor:pointer; text-decoration:underline; }
-
-/* Chat Box */
 .chat-box {
   max-width:580px;
   border:1px solid var(--border);
@@ -143,12 +137,9 @@ header {
 }
 .chat-hint span { color:var(--accent); cursor:pointer; }
 .chat-hint span:hover { text-decoration:underline; }
-
-/* Sections */
 section { padding:4rem 1.5rem; }
 .section-inner { max-width:1100px; margin:0 auto; }
 .section-label { font-size:.65rem; letter-spacing:.2em; color:var(--dim); margin-bottom:1.5rem; }
-
 .features-grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -160,7 +151,6 @@ section { padding:4rem 1.5rem; }
 .feature-card .n { font-size:.6rem; color:var(--accent); margin-bottom:.6rem; }
 .feature-card h3 { font-size:.85rem; font-weight:500; margin-bottom:.4rem; }
 .feature-card p { font-size:.7rem; color:var(--dim); line-height:1.5; }
-
 .products-grid {
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
@@ -171,7 +161,6 @@ section { padding:4rem 1.5rem; }
 .product-box { background:var(--bg); padding:1.2rem; }
 .product-box h3 { font-size:.8rem; font-weight:500; margin-bottom:.3rem; }
 .product-box p { font-size:.65rem; color:var(--dim); line-height:1.4; }
-
 .stack-line {
   text-align:center; padding:1.5rem;
   font-size:.7rem; color:var(--dim);
@@ -180,7 +169,6 @@ section { padding:4rem 1.5rem; }
 }
 .stack-line .d { display:inline-block; width:5px; height:5px; background:#0f0; border-radius:50%; margin-right:6px; }
 .stack-line .err { color:var(--accent); }
-
 footer {
   text-align:center; padding:3rem 1.5rem;
 }
@@ -192,7 +180,6 @@ footer .cta {
   border:none; padding:.6rem 1.2rem;
   font-weight:600; cursor:pointer;
 }
-
 @media (max-width:700px) {
   .features-grid { grid-template-columns:1fr; }
   .badge { display:none; }
@@ -203,10 +190,10 @@ footer .cta {
 
 <header>
   <div class="header-inner">
-    <div class="logo"><span>âœ¦</span> Mantlic Wallet</div>
-    <div class="badge"><span class="dot"></span> Live Â· Mantle <span style="color:#FFD700">Sepolia</span> Testnet</div>
+    <div class="logo">* Mantlic Wallet</div>
+    <div class="badge"><span class="dot"></span> Live - Mantle Sepolia Testnet</div>
     <div>
-      <button class="conn-btn" id="addrBtn" onclick="promptAddress()" style="background:transparent;border:1px solid var(--border);color:var(--text);margin-right:6px;">âŒ¨ Address</button>
+      <button class="conn-btn" id="addrBtn" onclick="promptAddress()" style="background:transparent;border:1px solid var(--border);color:var(--text);margin-right:6px;">[+] Address</button>
       <button class="conn-btn" id="connBtn" onclick="connectWallet()">Connect Wallet</button>
     </div>
   </div>
@@ -216,19 +203,19 @@ footer .cta {
   <div class="hero-inner">
     <div class="label">Conversational finance</div>
     <h1>Talk to your money,<br><span class="accent">on Mantle.</span></h1>
-    <p>Check balance, analyze portfolio, track gas &mdash; by message. <a onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">See it work â†’</a></p>
+    <p>Check balance, analyze portfolio, track gas - by message. <a onclick="document.getElementById('demo').scrollIntoView({behavior:'smooth'})">See it work &rarr;</a></p>
 
     <div class="chat-box" id="demo">
       <div class="chat-head">
-        <div class="av">âœ¦</div>
+        <div class="av">*</div>
         <div>
           <div class="nm">Mantlic Wallet</div>
-          <div class="st" id="netStatus">Mantle Sepolia Â· connecting...</div>
+          <div class="st" id="netStatus">Mantle Sepolia - connecting...</div>
         </div>
       </div>
       <div class="chat-msgs" id="chatMsgs">
         <div class="msg bot">
-          <div class="b">Connecting to Mantle... <span class="typing">â³</span></div>
+          <div class="b">Connecting to Mantle... <span class="typing">[wait]</span></div>
         </div>
       </div>
       <div class="chat-inp">
@@ -240,7 +227,7 @@ footer .cta {
         </button>
       </div>
       <div class="chat-hint">
-        Try: <span onclick="fill('balance')">balance</span> Â· <span onclick="fill('tokens')">tokens</span> Â· <span onclick="fill('analyze')">analyze</span> Â· <span onclick="fill('help')">help</span>
+        Try: <span onclick="fill('balance')">balance</span> - <span onclick="fill('tokens')">tokens</span> - <span onclick="fill('analyze')">analyze</span> - <span onclick="fill('help')">help</span>
       </div>
     </div>
   </div>
@@ -273,11 +260,11 @@ footer .cta {
   <div class="section-inner">
     <p class="section-label">/ Products</p>
     <div class="products-grid">
-      <div class="product-box"><h3>ðŸ§  Intelligence</h3><p>Agent that knows your wallet, tracks history, and flags risks.</p></div>
-      <div class="product-box"><h3>ðŸ’° Finance</h3><p>Balance, tokens, gas tracking â€” all from one chat.</p></div>
-      <div class="product-box"><h3>ðŸ”„ Swap</h3><p>Best-route token swaps across Mantle DEXs.</p></div>
-      <div class="product-box"><h3>ðŸ“¡ Monitor</h3><p>Live contract alerts and transaction tracking.</p></div>
-      <div class="product-box"><h3>ðŸ“‹ Passport</h3><p>Non-custodial wallet. No seed phrase. Google sign-in.</p></div>
+      <div class="product-box"><h3>[i] Intelligence</h3><p>Agent that knows your wallet, tracks history, and flags risks.</p></div>
+      <div class="product-box"><h3>[$] Finance</h3><p>Balance, tokens, gas tracking - all from one chat.</p></div>
+      <div class="product-box"><h3>[x] Swap</h3><p>Best-route token swaps across Mantle DEXs.</p></div>
+      <div class="product-box"><h3>[~] Monitor</h3><p>Live contract alerts and transaction tracking.</p></div>
+      <div class="product-box"><h3>[@] Passport</h3><p>Non-custodial wallet. No seed phrase. Google sign-in.</p></div>
     </div>
   </div>
 </section>
@@ -287,7 +274,7 @@ footer .cta {
 <footer>
   <h2>Your wallet. In chat.</h2>
   <p>Add an address or connect a wallet. The agent handles the rest.</p>
-  <button class="cta" onclick="promptAddress()" style="margin-right:.5rem;">âŒ¨ Enter Address</button>
+  <button class="cta" onclick="promptAddress()" style="margin-right:.5rem;">[+] Enter Address</button>
   <button class="cta" onclick="connectWallet()" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">Connect Wallet</button>
 </footer>
 
@@ -314,13 +301,13 @@ const cs = document.getElementById('chainStatus');
 
 async function initChain() {
   try {
-    provider = new JsonRpcProvider(MANTLE.rpc, { chainId: MANTLE.chainId, name: 'Mantle Hoodi' });
+    provider = new JsonRpcProvider(MANTLE.rpc, { chainId: MANTLE.chainId, name: 'Mantle Sepolia' });
     const net = await provider.getNetwork();
     const block = await provider.getBlock('latest');
     const gas = await provider.getFeeData();
 
-    ns.textContent = 'Mantle Hoodi Â· #' + block.number.toLocaleString();
-    cs.innerHTML = '<span class="d"></span> Mantle Hoodi Â· Block ' + block.number.toLocaleString() + ' Â· ' + parseFloat(formatUnits(gas.gasPrice, 'gwei')).toFixed(0) + ' Gwei';
+    ns.textContent = 'Mantle Sepolia - #' + block.number.toLocaleString();
+    cs.innerHTML = '<span class="d"></span> Mantle Sepolia - Block ' + block.number.toLocaleString() + ' - ' + parseFloat(formatUnits(gas.gasPrice, 'gwei')).toFixed(0) + ' Gwei';
     cs.className = 'stack-line';
 
     ci.disabled = false;
@@ -328,12 +315,12 @@ async function initChain() {
     ci.focus();
 
     clearChat();
-    addBotMsg('Connected to Mantle Sepolia Testnet. Type <span style="color:var(--accent)">help</span> to see commands.\n\n<span style="color:var(--dim);font-size:.65rem">Tips: Click <span style="color:var(--accent)">âŒ¨ Address</span> above to enter a wallet, or <span style="color:var(--accent)">Connect Wallet</span> for full access.</span>');
+    addBotMsg('Connected to Mantle Sepolia Testnet. Type help to see commands.');
   } catch(e) {
-    ns.textContent = 'Mantle Â· connection failed';
-    cs.innerHTML = '<span class="err">âš </span> RPC connection failed: ' + e.message;
+    ns.textContent = 'Mantle - connection failed';
+    cs.innerHTML = '<span class="err">[!]</span> RPC connection failed: ' + e.message;
     cs.className = 'stack-line';
-    addBotMsg('âš  Failed to connect to Mantle. RPC may be down.');
+    addBotMsg('[!] Failed to connect to Mantle. RPC may be down.');
   }
 }
 
@@ -364,12 +351,12 @@ function promptAddress() {
   const addr = prompt('Enter Mantle address (0x...):');
   if (addr && addr.startsWith('0x') && addr.length === 42) {
     address = addr;
-    cb.textContent = 'âœ“ Watch';
+    cb.textContent = '[ok] Watch';
     cb.className = 'conn-btn connected';
     ns.textContent = 'Read: ' + addr.slice(0,6) + '...' + addr.slice(-4);
-    addBotMsg('âœ… Watching: <span style="color:var(--accent)">' + addr.slice(0,6) + '...' + addr.slice(-4) + '</span>\nTry <span style="color:var(--accent)">balance</span> to check MNT.');
+    addBotMsg('[ok] Watching: ' + addr.slice(0,6) + '...' + addr.slice(-4) + '\nTry balance to check MNT.');
   } else if (addr) {
-    addBotMsg('âš  Invalid address. Must be 0x... (42 hex chars).');
+    addBotMsg('[!] Invalid address. Must be 0x... (42 hex chars).');
   }
 }
 
@@ -389,17 +376,17 @@ async function processCmd(input) {
   if (cmd === 'clear') { clearChat(); addBotMsg('Terminal cleared.'); return; }
 
   if (cmd === 'balance' || cmd === 'bal') {
-    if (!address) { addBotMsg('No wallet/address set. Click "Address" or "Connect Wallet".'); return; }
+    if (!address) { addBotMsg('No wallet/address set. Click "[+] Address" or "Connect Wallet".'); return; }
     const bal = await getBalance(address);
     const n = parseFloat(bal);
-    addBotMsg('Your Mantle balance:\n\n<div style="font-size:1.2rem;margin:.5rem 0">' + n.toLocaleString(undefined,{minimumFractionDigits:4}) + ' <span style="color:var(--accent)">MNT</span></div>\n<small style="color:var(--dim)">â‰ˆ $' + (n*mntPrice).toLocaleString(undefined,{minimumFractionDigits:2}) + ' USD</small>');
+    addBotMsg('Your Mantle balance:\n\n<div style="font-size:1.2rem;margin:.5rem 0">' + n.toLocaleString(undefined,{minimumFractionDigits:4}) + ' <span style="color:var(--accent)">MNT</span></div>\n<small style="color:var(--dim)">~ $' + (n*mntPrice).toLocaleString(undefined,{minimumFractionDigits:2}) + ' USD</small>');
     return;
   }
 
   if (cmd === 'tokens' || cmd === 'portfolio') {
     if (!address) { addBotMsg('No address set.'); return; }
     const bal = await getBalance(address);
-    addBotMsg('Portfolio:\n\n<div class="resp"><div class="rw"><span class="k">MNT</span><span class="v">' + parseFloat(bal).toLocaleString(undefined,{minimumFractionDigits:4}) + ' (100%)</span></div><div class="rw"><span class="k">Status</span><span class="v ok">âœ“ Live</span></div></div>');
+    addBotMsg('Portfolio:\n\n<div class="resp"><div class="rw"><span class="k">MNT</span><span class="v">' + parseFloat(bal).toLocaleString(undefined,{minimumFractionDigits:4}) + ' (100%)</span></div><div class="rw"><span class="k">Status</span><span class="v ok">[ok] Live</span></div></div>');
     return;
   }
 
@@ -407,24 +394,24 @@ async function processCmd(input) {
     if (!address) { addBotMsg('No address set.'); return; }
     const bal = await getBalance(address);
     const gas = await getGasPrice();
-    addBotMsg('Analysis:\n\n<div class="resp"><div class="rw"><span class="k">Balance</span><span class="v">' + parseFloat(bal).toFixed(4) + ' MNT</span></div><div class="rw"><span class="k">Gas</span><span class="v">' + parseFloat(gas).toFixed(0) + ' Gwei</span></div><div class="rw"><span class="k">Diversity</span><span class="v">100% MNT</span></div><div class="rw"><span class="k">Risk</span><span class="v">Low</span></div><div class="rw"><span class="k">Status</span><span class="v ok">âœ“ Connected</span></div></div>');
+    addBotMsg('Analysis:\n\n<div class="resp"><div class="rw"><span class="k">Balance</span><span class="v">' + parseFloat(bal).toFixed(4) + ' MNT</span></div><div class="rw"><span class="k">Gas</span><span class="v">' + parseFloat(gas).toFixed(0) + ' Gwei</span></div><div class="rw"><span class="k">Diversity</span><span class="v">100% MNT</span></div><div class="rw"><span class="k">Risk</span><span class="v">Low</span></div><div class="rw"><span class="k">Status</span><span class="v ok">[ok] Connected</span></div></div>');
     return;
   }
 
   if (cmd === 'status' || cmd === 'net') {
     const block = await provider.getBlock('latest');
     const gas = await getGasPrice();
-    const bal = address ? await getBalance(address) : 'â€”';
-    addBotMsg('Network:\n\n<div class="resp"><div class="rw"><span class="k">Network</span><span class="v">Mantle Hoodi</span></div><div class="rw"><span class="k">Block</span><span class="v">#' + block.number.toLocaleString() + '</span></div><div class="rw"><span class="k">Gas</span><span class="v">' + parseFloat(gas).toFixed(0) + ' Gwei</span></div><div class="rw"><span class="k">Wallet</span><span class="v">' + (address ? address.slice(0,6)+'...'+address.slice(-4) : 'Not set') + '</span></div><div class="rw"><span class="k">MNT</span><span class="v">' + (bal !== 'â€”' ? parseFloat(bal).toFixed(4)+' MNT' : 'â€”') + '</span></div><div class="rw"><span class="k">RPC</span><span class="v ok">âœ“ Connected</span></div></div>');
+    const bal = address ? await getBalance(address) : '--';
+    addBotMsg('Network:\n\n<div class="resp"><div class="rw"><span class="k">Network</span><span class="v">Mantle Sepolia</span></div><div class="rw"><span class="k">Block</span><span class="v">#' + block.number.toLocaleString() + '</span></div><div class="rw"><span class="k">Gas</span><span class="v">' + parseFloat(gas).toFixed(0) + ' Gwei</span></div><div class="rw"><span class="k">Wallet</span><span class="v">' + (address ? address.slice(0,6)+'...'+address.slice(-4) : 'Not set') + '</span></div><div class="rw"><span class="k">MNT</span><span class="v">' + (bal !== '--' ? parseFloat(bal).toFixed(4)+' MNT' : '--') + '</span></div><div class="rw"><span class="k">RPC</span><span class="v ok">[ok] Connected</span></div></div>');
     return;
   }
 
   if (cmd === 'help' || cmd === '?') {
-    addBotMsg('Commands:\n\n<div class="resp"><div class="rw"><span class="k">balance</span><span class="v">Check MNT balance</span></div><div class="rw"><span class="k">tokens</span><span class="v">Portfolio overview</span></div><div class="rw"><span class="k">analyze</span><span class="v">Risk &amp; analysis</span></div><div class="rw"><span class="k">status</span><span class="v">Network &amp; wallet</span></div><div class="rw"><span class="k">ask</span><span class="v">Ask AI anything about your wallet</span></div><div class="rw"><span class="k">clear</span><span class="v">Clear chat</span></div><div class="rw"><span class="k">help</span><span class="v">This menu</span></div></div>');
+    addBotMsg('Commands:\n\n<div class="resp"><div class="rw"><span class="k">balance</span><span class="v">Check MNT balance</span></div><div class="rw"><span class="k">tokens</span><span class="v">Portfolio overview</span></div><div class="rw"><span class="k">analyze</span><span class="v">Risk and analysis</span></div><div class="rw"><span class="k">status</span><span class="v">Network and wallet</span></div><div class="rw"><span class="k">clear</span><span class="v">Clear chat</span></div><div class="rw"><span class="k">help</span><span class="v">This menu</span></div></div>');
     return;
   }
 
-  // Anything else = send to Qwen AI
+  // Unknown command - try Qwen AI
   if (address && window.QWEN) {
     const bal = await getBalance(address);
     const gas = await getGasPrice();
@@ -438,7 +425,7 @@ async function processCmd(input) {
       return;
     }
   }
-  addBotMsg('Unknown: <span style="color:var(--accent)">' + input.replace(/</g,'&lt;') + '</span>\nType <span style="color:var(--accent)">help</span>.');
+  addBotMsg('Unknown: ' + input.replace(/</g,'&lt;') + '\nType help.');
 }
 
 async function connectWallet() {
@@ -447,20 +434,20 @@ async function connectWallet() {
     return;
   }
   if (!window.ethereum) {
-    addBotMsg('âš  No browser wallet. Use "Address" button to enter a Mantle address manually.');
+    addBotMsg('[!] No browser wallet. Use "[+] Address" button to enter a Mantle address manually.');
     return;
   }
   try {
     addBotMsg('Requesting wallet...');
     await window.ethereum.request({ method: 'eth_requestAccounts' });
     try {
-      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xc352' }] });
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0xc353' }] });
     } catch(e) {
       if (e.code === 4902) {
         await window.ethereum.request({
           method: 'wallet_addEthereumChain',
           params: [{
-            chainId: '0xc352',
+            chainId: '0xc353',
             chainName: 'Mantle Sepolia Testnet',
             rpcUrls: [MANTLE.rpc],
             nativeCurrency: { name: 'MNT', symbol: 'MNT', decimals: 18 },
@@ -473,14 +460,12 @@ async function connectWallet() {
     provider = new BrowserProvider(window.ethereum);
     signer = await provider.getSigner();
     address = await signer.getAddress();
-    cb.textContent = 'âœ“ Connected';
+    cb.textContent = '[ok] Connected';
     cb.className = 'conn-btn connected';
     ns.textContent = 'Wallet: ' + address.slice(0,6) + '...' + address.slice(-4);
-    ns.textContent = 'Wallet: ' + address.slice(0,6) + '...' + address.slice(-4);
-    addBotMsg('âœ… Connected: <span style="color:var(--accent)">' + address.slice(0,6) + '...' + address.slice(-4) + '</span>');
-    addBotMsg('Now I can answer any question. Try: <span style="color:var(--accent)">how is the gas?</span> or <span style="color:var(--accent)">analyze my wallet</span>');
+    addBotMsg('[ok] Connected: ' + address.slice(0,6) + '...' + address.slice(-4));
   } catch(e) {
-    addBotMsg('âš  Connection cancelled.');
+    addBotMsg('[!] Connection cancelled.');
   }
 }
 
@@ -493,10 +478,10 @@ async function sendMsg() {
   const td = document.createElement('div');
   td.className = 'msg bot';
   td.id = tid;
-  td.innerHTML = '<div class="b"><span class="typing">â³ thinking...</span></div>';
+  td.innerHTML = '<div class="b"><span class="typing">[wait] thinking...</span></div>';
   cm.appendChild(td);
   cm.scrollTop = cm.scrollHeight;
-  try { await processCmd(t); } catch(e) { addBotMsg('âš  Error: ' + e.message); }
+  try { await processCmd(t); } catch(e) { addBotMsg('[!] Error: ' + e.message); }
   const el = document.getElementById(tid);
   if (el) el.remove();
 }
@@ -504,34 +489,22 @@ async function sendMsg() {
 ci.addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
 sb.addEventListener('click', sendMsg);
 initChain();
-// Qwen AI â€” works from file:// via public CORS proxies
-window.QWEN = {
-  _proxies: [
-    'https://api.allorigins.win/raw?url=',
-    'https://corsproxy.io/?'
-  ],
-  _proxyIdx: 0,
 
+// Qwen AI with CORS proxy fallback
+window.QWEN = {
+  _proxies: ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?'],
+  _proxyIdx: 0,
   async ask(messages) {
-    const payload = {
-      model: 'qwen3.5-omni-plus',
-      messages,
-      max_tokens: 200,
-      temperature: 0.7
-    };
+    const payload = { model: 'qwen3.5-omni-plus', messages, max_tokens: 200, temperature: 0.7 };
     const apiUrl = 'https://ws-zk1ia72jgwez6qgp.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/chat/completions';
     const apiKey = 'sk-ws-H.IIEDIH.kx4n.MEUCIFT9ZIwCA-4AZQexb2TFfFI58svOova0GHtHa7aWQZkpAiEAmPxci17zOBvHsYkeZkXIdRfy2K1Gt3AYhDSdqyT2eLs';
-
     for (let attempt = 0; attempt < this._proxies.length; attempt++) {
       const idx = (this._proxyIdx + attempt) % this._proxies.length;
       const proxy = this._proxies[idx];
       try {
         const res = await fetch(proxy + encodeURIComponent(apiUrl), {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + apiKey
-          },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
           body: JSON.stringify(payload),
           signal: AbortSignal.timeout(10000)
         });
@@ -539,16 +512,12 @@ window.QWEN = {
         const data = await res.json();
         this._proxyIdx = idx;
         return data.choices?.[0]?.message?.content || '';
-      } catch(e) {
-        continue;
-      }
+      } catch(e) { continue; }
     }
     return null;
   }
 };
-console.log('âœ“ Qwen AI ready (CORS proxy mode)');
+console.log('[ok] Qwen AI ready');
 </script>
 </body>
 </html>
-
-
