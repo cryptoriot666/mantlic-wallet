@@ -225,19 +225,6 @@ function connectWallet() {
     try {
       var accs = await provider.request({method: "eth_requestAccounts"});
       if (!accs || !accs.length) { addBot("No accounts."); return; }
-      try {
-        await provider.request({method: "wallet_switchEthereumChain", params: [{chainId: MANTLE.hexChainId}]});
-      } catch(e) {
-        if (e.code === 4902) {
-          await provider.request({method: "wallet_addEthereumChain", params: [{
-            chainId: MANTLE.hexChainId,
-            chainName: "Mantle Sepolia Testnet",
-            rpcUrls: [MANTLE.rpc],
-            nativeCurrency: {name: "MNT", symbol: "MNT", decimals: 18},
-            blockExplorerUrls: [MANTLE.explorer]
-          }]});
-        }
-      }
       setWallet(accs[0]);
     } catch(e) { addBot("Failed: " + e.message); }
   })();
